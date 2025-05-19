@@ -1,0 +1,8 @@
+ssoready>=1.1.0
+flask>=2.3.3
+python-dotenv>=1.0.0
+requests>=2.31.0
+python-jose>=3.3.0
+flask-jwt-extended>=4.5.2
+pyjwt>=2.8.0
+permit>=1.0.0

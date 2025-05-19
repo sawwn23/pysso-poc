@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ tenant_id }} - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100">
+    <div class="min-h-full">
+      <nav class="bg-indigo-600">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div class="flex h-16 items-center justify-between">
+            <div class="flex items-center">
+              <div class="text-white text-xl font-bold">
+                {{ tenant_id }} Portal
+              </div>
+            </div>
+            <div class="flex items-center gap-4">
+              {% if 'admin' in user_info.roles %}
+              <a href="/admin/tenants" class="text-white hover:text-gray-200"
+                >Admin Panel</a
+              >
+              {% endif %}
+              <a href="/home" class="text-white hover:text-gray-200"
+                >Main Dashboard</a
+              >
+              {% if user_info %}
+              <div class="text-white">{{ user_info.email }}</div>
+              <a
+                href="/logout"
+                class="rounded-md bg-indigo-700 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500"
+                >Logout</a
+              >
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <main>
+        <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+          <div class="px-4 py-6 sm:px-0">
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <!-- Tenant Resources -->
+              <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                  <h3 class="text-lg font-medium text-gray-900">
+                    {{ tenant_id }} Resources
+                  </h3>
+                  <div class="mt-4 space-y-4">
+                    <div id="resources-list" class="space-y-2">
+                      <!-- Resources will be loaded here -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tenant Stats -->
+              <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                  <h3 class="text-lg font-medium text-gray-900">
+                    Tenant Statistics
+                  </h3>
+                  <dl class="mt-4 space-y-4">
+                    <div>
+                      <dt class="text-sm font-medium text-gray-500">
+                        Total Users
+                      </dt>
+                      <dd class="mt-1 text-2xl text-gray-900">25</dd>
+                    </div>
+                    <div>
+                      <dt class="text-sm font-medium text-gray-500">
+                        Active Resources
+                      </dt>
+                      <dd class="mt-1 text-2xl text-gray-900">12</dd>
+                    </div>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      // Fetch tenant resources
+      fetch(`/api/tenant/${encodeURIComponent("{{ tenant_id }}")}/resources`)
+        .then((response) => response.json())
+        .then((data) => {
+          const resourcesList = document.getElementById("resources-list")
+          data.resources.forEach((resource) => {
+            const div = document.createElement("div")
+            div.className = "p-3 bg-gray-50 rounded-md"
+            div.innerHTML = `<span class="font-medium">${resource.name}</span>`
+            resourcesList.appendChild(div)
+          })
+        })
+        .catch((error) => console.error("Error loading resources:", error))
+    </script>
+  </body>
+</html>
