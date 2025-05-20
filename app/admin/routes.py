@@ -1,35 +1,42 @@
-from flask import Blueprint, jsonify, current_app, request
+from flask import Blueprint, jsonify, current_app, render_template, request
 from flask_jwt_extended import jwt_required, get_jwt
-from app.core.decorators import permit_authorize
+from datetime import datetime
+import logging
+from app.models.tenant import Tenant
 
 admin_bp = Blueprint('admin', __name__)
+logger = logging.getLogger(__name__)
 
 @admin_bp.route('/tenants')
 @jwt_required()
-@permit_authorize("admin", "access")
 def list_tenants():
-    """List all tenants. Requires admin access."""
+    """List all tenants (admin only)."""
     try:
-        current_app.logger.info("Admin accessing tenant list")
+        # Get user info from JWT
         claims = get_jwt()
-        user_email = claims.get('sub')
+        email = claims.get('email')
+        roles = claims.get('roles', [])
         
-        # Get tenants from the tenant mapping
-        from app.config.tenant_mapping import TENANT_MAPPING
-        tenants = [
-            {'id': info['id'], 'name': info['name']} 
-            for info in TENANT_MAPPING.values()
-        ]
+        # Check if user is admin
+        if 'admin' not in roles:
+            logger.warning(f"Non-admin user {email} attempted to access tenant list")
+            return jsonify({"error": "Admin access required"}), 403
+            
+        logger.info("Admin accessing tenant list")
         
-        current_app.logger.info(f"Admin {user_email} retrieved tenant list")
-        return jsonify({
-            'tenants': tenants,
-            'timestamp': datetime.now().isoformat()
-        })
+        # Get all tenants from the database
+        tenants = Tenant.get_all()
+        tenant_list = [tenant.to_dict() for tenant in tenants]
+                
+        logger.info(f"Admin {email} retrieved tenant list")
+        
+        # Check if the request wants JSON
+        if request.headers.get('Accept') == 'application/json':
+            return jsonify(tenant_list)
+            
+        # Otherwise render the template
+        return render_template('admin/tenants.html', tenants=tenant_list)
         
     except Exception as e:
-        current_app.logger.error(f"Error listing tenants: {str(e)}")
-        return jsonify({
-            "msg": "Error fetching tenants",
-            "error": "tenant_fetch_error"
-        }), 500
+        logger.error(f"Error listing tenants: {str(e)}")
+        return jsonify({"error": "Failed to list tenants"}), 500

@@ -3,7 +3,7 @@
 {% block title %}Dashboard - Multi-tenant SSO{% endblock %}
 
 {% block content %}
-    <div class="min-h-full">
+    <div class="min-h-screen">
       <nav class="bg-indigo-600">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div class="flex h-16 items-center justify-between">
@@ -13,40 +13,36 @@
               </div>
             </div>
             <div class="flex items-center gap-4">
-              {% if user_info %} {% if 'admin' in user_info.roles %}
-              <a
-                href="{{ url_for('admin.list_tenants') }}"
-                class="text-white hover:text-gray-200"
-                >Admin Panel</a
-              >
-              {% endif %}
-              <a
-                href="{{ url_for('tenant.tenant_home', tenant_id=user_info.email.split('@')[1]) }}"
-                class="text-white hover:text-gray-200"
-                >My Tenant</a
-              >
-              <div class="text-white">{{ user_info.email }}</div>
-              <a
-                href="{{ url_for('auth.logout') }}"
-                class="rounded-md bg-indigo-700 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500"
-                >Logout</a
-              >
+              {% if user_info %}
+                {% if 'admin' in user_info.roles %}
+                <a href="{{ url_for('admin.list_tenants') }}"
+                   class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium">
+                   Admin Panel
+                </a>
+                {% endif %}
+                <a href="{{ url_for('tenant.tenant_home', tenant_id=user_info.tenant_id) }}"
+                   class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium">
+                   My Tenant
+                </a>
+                <span class="text-white px-3 py-2">{{ user_info.email }}</span>
+                <a href="{{ url_for('auth.logout') }}"
+                   class="rounded-md bg-indigo-700 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500">
+                   Logout
+                </a>
               {% else %}
-              <a
-                href="{{ url_for('auth.login') }}"
-                class="rounded-md bg-indigo-700 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500"
-                >Login</a
-              >
+                <a href="{{ url_for('auth.login') }}"
+                   class="rounded-md bg-indigo-700 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500">
+                   Login
+                </a>
               {% endif %}
             </div>
           </div>
         </div>
       </nav>
 
-      <main>
-        <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+      <main class="py-6">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {% if user_info %}
-          <div class="px-4 py-6 sm:px-0">
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               <!-- User Profile Card -->
               <div class="bg-white overflow-hidden shadow rounded-lg">
@@ -68,11 +64,15 @@
                       </dd>
                     </div>
                     <div>
-                      <dt class="text-sm font-medium text-gray-500">
-                        Organization
-                      </dt>
+                      <dt class="text-sm font-medium text-gray-500">Organization</dt>
                       <dd class="mt-1 text-sm text-gray-900">
-                        {{ user_info.email.split('@')[1] }}
+                        {{ user_info.tenant_id }}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt class="text-sm font-medium text-gray-500">Roles</dt>
+                      <dd class="mt-1 text-sm text-gray-900">
+                        {{ user_info.roles|join(', ') }}
                       </dd>
                     </div>
                   </dl>
@@ -88,11 +88,9 @@
                       <p class="text-sm text-gray-500">
                         Access your organization's resources via API:
                       </p>
-                      <ul
-                        class="mt-2 list-disc list-inside text-sm text-gray-600"
-                      >
+                      <ul class="mt-2 list-disc list-inside text-sm text-gray-600">
                         <li>GET /api/me - User Info</li>
-                        <li>GET /api/tenant/{tenant}/resources</li>
+                        <li>GET /api/tenant/{{ user_info.tenant_id }}/resources</li>
                         {% if 'admin' in user_info.roles %}
                         <li>GET /api/admin/tenants (Admin Only)</li>
                         {% endif %}
@@ -102,17 +100,14 @@
                 </div>
               </div>
             </div>
-          </div>
           {% else %}
-          <div class="text-center">
-            <p class="text-gray-600">You are not logged in.</p>
-            <a
-              href="{{ url_for('auth.login') }}"
-              class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-            >
-              Go to Login
-            </a>
-          </div>
+            <div class="text-center">
+              <p class="text-gray-600">You are not logged in.</p>
+              <a href="{{ url_for('auth.login') }}"
+                 class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                Go to Login
+              </a>
+            </div>
           {% endif %}
         </div>
       </main>

@@ -21,30 +21,53 @@ A secure, multi-tenant Flask application with JWT authentication and role-based 
 ## Quick Start
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/yourusername/python-ssoready-app.git
    cd python-ssoready-app
    ```
 
 2. Create and activate a virtual environment:
+
    ```bash
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
 3. Install dependencies:
+
    ```bash
    pip install -r requirements.txt
    ```
 
 4. Copy the example environment file and update with your credentials:
+
    ```bash
    cp .env.example .env
    ```
-   
-   Edit the `.env` file with your actual credentials.
 
-5. Run the application:
+   Edit the `.env` file with your actual credentials:
+   ```env
+   SECRET_KEY=your-secret-key
+   JWT_SECRET_KEY=your-jwt-secret-key
+   SSOREADY_API_KEY=your-ssoready-api-key
+   PERMIT_SDK_TOKEN=your-permit-token
+   ```
+
+5. Configure organizations in `app/config/config.py`:
+   ```python
+   ORGANIZATIONS = {
+       "example.com": {
+           "name": "Example Organization",
+           "description": "Admin organization",
+           "is_admin": True,
+           "organization_id": "your-org-id"
+       }
+   }
+   ```
+
+6. Run the application:
+
    ```bash
    python run.py
    ```
@@ -57,12 +80,8 @@ A secure, multi-tenant Flask application with JWT authentication and role-based 
 
 - `SECRET_KEY`: Flask secret key for session encryption
 - `JWT_SECRET_KEY`: Secret key for JWT token signing
-- `JWT_ACCESS_TOKEN_EXPIRES`: Token expiration time in seconds (default: 3600)
 - `SSOREADY_API_KEY`: Your SSOReady API key
-- `SSOREADY_ORGANIZATION_ID`: Your SSOReady organization ID
 - `PERMIT_SDK_TOKEN`: Your Permit.io SDK token
-- `PERMIT_PDP_URL`: Permit PDP URL (default: http://localhost:7766)
-- `PERMIT_API_URL`: Permit API URL (default: https://api.permit.io)
 
 ### Optional Environment Variables
 
@@ -70,155 +89,77 @@ A secure, multi-tenant Flask application with JWT authentication and role-based 
 - `PORT`: Port to run the application on (default: 5000)
 - `LOG_LEVEL`: Logging level (default: INFO)
 
-## Multi-tenant Authorization System
+## Multi-Tenant Authorization System
 
-This application implements a multi-tenant authorization system with the following features:
+### Organization Configuration
 
-### Tenant Isolation
-
-- Each user belongs to a tenant (organization) based on their email domain
-- Resources are isolated by tenant
-- Users can only access their own tenant's resources
-
-### Role-Based Access Control (RBAC)
-
-- Basic roles: 'user', 'admin'
-- Admins have access to all tenants
-- Role-based API endpoints
-
-### JWT-Based Authentication
-
-- Secure JWT tokens issued after successful SSO
-- Tokens include tenant and role information
-- Token-based API access
-
-### Protected API Endpoints
-
-- `/api/me` - Get current user information
-- `/api/tenant/<tenant_id>/resources` - Access tenant-specific resources
-- `/api/admin/tenants` - List all tenants (admin only)
-
-### Demo Users
-
-- Regular User: user@example.com
-- Admin User: admin@example.com
-- Tenant 1: user@company1.com
-- Tenant 2: user@company2.com
-
-3. Run in development:
-   ```bash
-   flask run
-   ```
-   App will be at http://localhost:5000
-
-## Self-hosted SSOReady
-
-You can run SSOReady yourself using docker-compose:
-
-```bash
-docker-compose up -d
+Organizations are configured in `Config.ORGANIZATIONS`:
+```python
+ORGANIZATIONS = {
+    "example.com": {
+        "name": "Example Organization",
+        "description": "Admin organization",
+        "is_admin": True,
+        "organization_id": "org_cd48zxghyarm0zr3sp349p59r"
+    }
+}
 ```
 
-DB migration to setup ssoready db schema
+### SSO Integration
 
-```bash
-docker run --network=host ssoready/ssoready-migrate:sha-18090f8 -d 'postgres://postgres:password@localhost/postgres?sslmode=disable' up
-```
-
-cp env.example .env
-
-Fill in the .env file with your own values.
-
-## Multiple IdPs / Multiple Orgs
-
-- SSOReady supports multiple organizations (IdPs) via the `organization_external_id` parameter.
-- The app uses the email domain to select the IdP:
-  - When a user logs in, the domain part of their email determines which organization/IdP to use.
-  - You can map domains to organization IDs in your code or config.
-- Example (in `app.py`):
+- **SSOReady** handles SAML-based authentication
+- The app uses the email domain to select the IdP
+- Example:
   ```python
-  domain = email.split('@')[-1]
-  sso_client.saml.get_saml_redirect_url(
-      organization_external_id=domain,  # or your mapping
-      organization_id=os.getenv("SSOREADY_ORGANIZATION_ID")
+  response = client.saml.get_saml_redirect_url(
+      organization_id=org_config['organization_id'],
+      organization_external_id=domain
   )
   ```
-- Register each domain/IdP in your SSOReady dashboard.
 
-The services will be available at:
+### Best Practices
 
-Authentication: http://localhost:8080
-API: http://localhost:8081
-App: http://localhost:8082
-Admin: http://localhost:8083
-Flask: http://localhost:5000
+1. Always use `get_sso_client()` helper to get the SSO client
+2. Configure callback URLs in SSOReady dashboard
+3. Use organization_external_id (domain) to identify organizations
+4. Handle SSO client initialization errors gracefully
+5. Validate user info from SSOReady response
 
-## Notes
+## API Endpoints
 
-- Only trust user info returned from the SSOReady callback.
-- For real SAML/SSO, use production credentials and real IdPs.
+### Authentication
+- `GET /login`: Login page
+- `GET /callback`: SSO callback handler
+- `GET /logout`: Logout handler
+- `GET /api/me`: Get current user information
 
-## Usage
+### Tenant Management
+- `GET /api/tenant/<tenant_id>/home`: Tenant home page
+- `GET /api/admin/tenants`: List all tenants (admin only)
 
-1. Click the "Login with SSO" button on the homepage to initiate the SAML authentication flow.
-2. You'll be redirected to your identity provider's login page.
-3. After successful authentication, you'll be redirected back to the application with your user information displayed.
-4. Click the "Logout" button to end your session.
+## Security Considerations
 
-## Configuration
+- JWT tokens for API authentication
+- Secure session management
+- Role-based access control
+- Tenant isolation
+- SSO client initialization checks
 
-### Environment Variables
+## Error Handling
 
-- `SECRET_KEY`: A secret key for Flask session encryption
-- `SSOREADY_API_KEY`: Your SSOReady API key
-- `SSOREADY_ORGANIZATION_ID`: Your organization ID in SSOReady
-- `FLASK_ENV`: Set to 'development' for development, 'production' for production
-- `FLASK_APP`: Entry point of the Flask application
+- SSO service unavailability
+- Invalid SAML access codes
+- Missing organization configuration
+- Authentication failures
 
-## Authorization with Permit.io
+## Contributing
 
-The application uses [Permit.io](https://permit.io) for fine-grained authorization control:
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
-### Resource Types
+## License
 
-- `tenant`: Represents organization resources with read/write/delete permissions
-- `resource`: Represents tenant-specific resources with read/write/delete permissions
-- `admin`: Special resource type for administrative access
-
-### Roles and Permissions
-
-1. User Role:
-
-   - Can read tenant resources
-   - Can read their own tenant information
-
-2. Admin Role:
-   - Full access to all resources
-   - Can manage tenants
-   - Access to admin features
-
-### Permit.io Configuration
-
-Configure the following environment variables:
-
-```env
-PERMIT_SDK_TOKEN=your-permit-token
-PERMIT_PDP_URL=https://cloudpdp.api.permit.io
-PERMIT_API_URL=https://api.permit.io
-```
-
-### How It Works
-
-1. Users are authenticated via SSO
-2. User data is synced with Permit.io
-3. Permit.io enforces authorization rules based on:
-   - User's role
-   - User's tenant
-   - Resource type
-   - Action type
-
-### Protected Endpoints
-
-- `/api/tenant/<tenant_id>/resources`: Protected by tenant access and resource read permission
-- `/api/admin/tenants`: Protected by admin access permission
-- `/api/me`: Protected by JWT authentication
+This project is licensed under the MIT License - see the LICENSE file for details.

@@ -15,24 +15,27 @@ def load_environment():
     """Load environment variables from .env file if it exists"""
     env_path = Path(__file__).parent / '.env'
     if env_path.exists():
+        logger.info(f"Found .env file at {env_path}")
         load_dotenv(dotenv_path=env_path, override=True)
         logger.info(f"Loaded environment variables from {env_path}")
         
         # Log important environment variables (without sensitive values)
         env_vars = [
             'FLASK_ENV', 'FLASK_APP', 'PORT',
-            'SSOREADY_ORGANIZATION_ID', 'PERMIT_PDP_URL', 'PERMIT_API_URL'
+            'SSOREADY_ORGANIZATION_ID'
         ]
         
         for var in env_vars:
-            logger.debug(f"{var}: {os.getenv(var, 'Not set')}")
+            value = os.getenv(var)
+            logger.info(f"{var}: {'Set' if value else 'Not set'} (Value: {value if value else 'None'})")
         
         # Log sensitive variables are set (but not their values)
-        sensitive_vars = ['SSOREADY_API_KEY', 'PERMIT_SDK_TOKEN', 'SECRET_KEY', 'JWT_SECRET_KEY']
+        sensitive_vars = ['SSOREADY_API_KEY', 'SECRET_KEY', 'JWT_SECRET_KEY']
         for var in sensitive_vars:
-            logger.debug(f"{var}: {'Set' if os.getenv(var) else 'Not set'}")
+            value = os.getenv(var)
+            logger.info(f"{var}: {'Set' if value else 'Not set'} (Length: {len(value) if value else 0})")
     else:
-        logger.warning("No .env file found. Using system environment variables.")
+        logger.warning(f"No .env file found at {env_path}. Using system environment variables.")
 
 try:
     # Load environment variables first

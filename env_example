@@ -1,0 +1,19 @@
+# Flask app secret key
+SECRET_KEY="secret-key-h"
+
+# SSOReady Configuration
+SSOREADY_API_KEY=ssoready_key
+SSOREADY_BASE_URL=https://api.ssoready.com
+
+
+# JWT Configuration
+JWT_SECRET_KEY=your-jwt-secret-key-here
+JWT_ACCESS_TOKEN_EXPIRES=3600
+
+
+# Server configuration
+FLASK_ENV=development
+FLASK_APP=app.py
+PORT=5000
+
+# SSOREADY_API_URL=http://localhost:8081
