@@ -8,15 +8,12 @@ A secure, multi-tenant Flask application with JWT authentication and role-based 
 - 🏢 Multi-tenant architecture
 - 👥 Role-based access control (RBAC)
 - 🔄 SSO integration via SSOReady
-- 🔒 Fine-grained permissions with Permit.io
-- 🚀 Production-ready configuration
 
 ## Prerequisites
 
 - Python 3.8+
 - pip (Python package manager)
 - SSOReady account and API key
-- Permit.io account and SDK token
 
 ## Quick Start
 
@@ -51,7 +48,6 @@ A secure, multi-tenant Flask application with JWT authentication and role-based 
    SECRET_KEY=your-secret-key
    JWT_SECRET_KEY=your-jwt-secret-key
    SSOREADY_API_KEY=your-ssoready-api-key
-   PERMIT_SDK_TOKEN=your-permit-token
    ```
 
 5. Configure organizations in `app/config/config.py`:
@@ -81,7 +77,6 @@ A secure, multi-tenant Flask application with JWT authentication and role-based 
 - `SECRET_KEY`: Flask secret key for session encryption
 - `JWT_SECRET_KEY`: Secret key for JWT token signing
 - `SSOREADY_API_KEY`: Your SSOReady API key
-- `PERMIT_SDK_TOKEN`: Your Permit.io SDK token
 
 ### Optional Environment Variables
 
